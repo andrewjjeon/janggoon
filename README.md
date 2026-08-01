@@ -60,3 +60,7 @@ I evaluated the % of correct tactical judgement from BLIP by parsing the caption
   <img src="assets/JANGGOON_eval.png" width="400"/>
   <p><em>JANGGOON Tactical Judgement Accuracy</em></p>
 </div>
+
+## 5. Future Work
+- Automatic web scraping of data and captioning with LLMs
+- Support different deployment and environments with Docker Containers
