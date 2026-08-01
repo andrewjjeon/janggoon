@@ -1,0 +1,5 @@
+data/
+blip-finetuned-checkpoints/
+blip-finetuned-model/
+TrainingLossCurve.png
+blip-finetuned-model_image_caption.png
