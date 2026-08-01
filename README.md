@@ -1,40 +1,42 @@
-# Image-Captioning Tactical Advisor Model (ICTAM)
+# JANGGOON - AI Strategist
 
 <h2>1. Introduction</h2>
-  ICTAM was my first attempt at applying pretrained LLMs to tactical analysis and advisory tasks. This work was inspired by <a href="https://www.science.org/doi/10.1126/science.ade9097">CICERO</a> and <a href="https://arxiv.org/abs/2312.11865">LLMs play sc2</a>. I primarily wanted to test the pretrained capabilities of image captioning models and see if they could make accurate tactical judgements with minimal supervised finetuning.
-
-<h2>2. Data Processing</h2>
-  My data pipeline consists of starcraft youtube video downloads from yt-dlp which feeds into image sampling and cropping using ffmpeg. I sample one image per minute (1/60 fps) as 1 frame should loosely describe the tactical state of the minimap for a minute although more sampling would be good. I crop the bottom left of the screen as that is where the minimap is. I then generate a .json caption file that stores a dictionary per image-caption pair. In order to enable tactical judgement evaluation, the captions were structured to start with "Winner. Followed by the rest of the caption."
-
+  JANGGOON is a deep learning model trained to assess strategic outcomes of scenes (in video games for now). This work was inspired by <a href="https://www.science.org/doi/10.1126/science.ade9097">CICERO</a> and <a href="https://arxiv.org/abs/2312.11865">LLMs play sc2</a>. It started as an experiment with the pretrained capabilities of image captioning models to see if they could make accurate tactical judgements given one or more scenes. This specific experiment involved an image-captioning model inferring a caption given an image that declared the winning player color, followed by an explanation of the scene (see example below).
+  
   <div style="display: flex; justify-content: center; gap: 20px;">
     <div style="text-align: center;">
-      <img src="art11_016.jpg" width="200"/>
+      <img src="assets/art11_016.jpg" width="200"/>
       <p><em>Sample Frame</em></p>
     </div>
     <div style="text-align: center;">
-      <img src="example_caption.png" width="800"/>
+      <img src="assets/example_caption.png" width="800"/>
       <p><em>Sample Caption</em></p>
     </div>
   </div>
 
+<h2>2. Data Pipeline</h2>
+  My data pipeline consists of starcraft youtube video downloads from yt-dlp which feeds into image sampling and cropping using ffmpeg. I sample one image per minute (1/60 fps) as 1 frame very roughly describes the tactical state of the minimap for a minute. This choice was made primarily because I chose to use human annotation or human experts to annotate the data. Consequently, I had to limit the amount of data as our annotation team was myself and one other. Starcraft has what is known as a "minimap" in the bottom left of the game view. This cropped out minimap of each frame is what I used as my image data. I then generate a .json caption file that stores a dictionary with image_id as the key and the actual caption as the value. In order to enable tactical judgement evaluation, the captions were structured to start with "Winner. Followed by the rest of the caption."
+
+
+
 <h2>3. Training and Validation</h2>
-  I did an 80-10-10 train-val-test split on my image-caption pairs. I then trained the BLIPConditionalGeneration model with the HuggingFace Trainer. This model was trained with a cross-entropy loss that compares a sequence of tokens against that same sequence shifted forward.
+  I did an 80-10-10 train-val-test split on my image-caption pairs. I then trained the BLIPConditionalGeneration model with the HuggingFace Trainer. This model was trained with an image-conditioned autoregressive cross-entropy loss. What this means is that the model has a "vocabulary" of a large amount of tokens (30,000 for example) and after seeing an image and the tokens before, it assigns a probability distribution across all tokens in its vocab on what is most likely to be the next token in the sequence. During training the loss then compares the probability assigned to the "correct" token and optimizes as it wants the probability to be as close to 100% as possible. So for example if it assigns a probability of 0.9 to token A and token A was the true next token (1.0), then the loss would be low 1.0 - 0.9, vice versa if token A was not the true next token (0) then the loss would be high 0-0.9.
 
   <div align="center">
-    <img src="TrainingLossCurve.png" width="600"/>
+    <img src="assets/TrainingLossCurve.png" width="600"/>
     <p><em>Train-Validation Loss Curves (validation only starts after the first epoch)</em></p>
   </div>
 
   <h2>4. Evaluation</h2>
-    I evaluated the % of correct tactical judgement from BLIP by parsing the caption string, and creating a list of just the winner prediction before the ".". I then compared this list against the same list from the actual captions. ICTAM successfully identifies the "winning player color" 80% of the time across multiple test trials with the test dataset which ICTAM had not been trained on.
+    I evaluated the % of correct tactical judgement from BLIP by parsing the caption string, and creating a list of just the winner prediction before the ".". I then compared this list against the same list from the actual captions. JANGGOON successfully identifies the "winning player color" 80% of the time across multiple test trials with the test dataset which JANGGOON had not been trained on.
     <div style="text-align:center">
-      <img src="blip-image-captioning-base_image_caption.png" width="400" style="vertical-align: top; margin-right:20px;" />
-      <img src="blip-finetuned-model_image_caption.png" width="400" style="vertical-align: top; margin-right:20px;" />
+      <img src="assets/blip-image-captioning-base_image_caption.png" width="400" style="vertical-align: top; margin-right:20px;" />
+      <img src="assets/blip-finetuned-model_image_caption.png" width="400" style="vertical-align: top; margin-right:20px;" />
       <p><em>blip-base vs blip-finetuned caption inference results</em></p>
     </div>
     <div style="text-align: center;">
-      <img src="ictam_eval.png" width="400"/>
-      <p><em>ICTAM Tactical Judgement Accuracy</em></p>
+      <img src="assets/JANGGOON_eval.png" width="400"/>
+      <p><em>JANGGOON Tactical Judgement Accuracy</em></p>
     </div>
 
 
@@ -42,44 +44,18 @@
 
 ### Environment Setup
 ```bash
-conda create -n ictam python=3.13 -y
-conda activate ictam
+conda create -n JANGGOON python=3.13 -y
+conda activate JANGGOON
 pip install -r requirements.txt
 ```
-### Running ICTAM Pipeline (Data Scraping/Processing --> Training/Validation --> Inference/Test)
+### Running JANGGOON Pipeline (Data Scraping/Processing --> Training/Validation --> Inference/Test)
 
 Use [`image_caption_extraction.py`](./image_caption_extraction.py) to... 
 - download youtube videos with yt-dlp
 - crop images from those videos and sample them with ffmpeg
 - generate image caption file that will need to be human-annotated
 
-Use [`ictam_model.py`](./ictam_model.py) to...
+Use [`JANGGOON_model.py`](./JANGGOON_model.py) to...
 - run inference with any HuggingFace Image-Captioning model you want (I used BLIP and GIT but it should for others with minimal changes.)
 - finetune-train any HF Image Captioning Model to make tactical analysis captions
 - test finetune-trained model's tactical judgement and analysis capabilities
-
-
-
-<!-- 
-ICTAM was my first attempt at applying pretrained LLMs to tactical analysis and advisory tasks. This work was inspired by [CICERO](https://www.science.org/doi/10.1126/science.ade9097) and [LLMs play sc2](https://arxiv.org/abs/2312.11865). In this project I generated a 723 image + caption dataset of starcraft minimaps and expert-annotated tactical description captions. I then 80-10-10 train-val-test split the dataset, and finetune-trained BLIP, on my data. BLIP is an image captioning model trained with an image-conditioned Cross Entropy Loss. The captions intentionally start with a winner (player color) followed by a period to enable downstream evaluation of ICTAM's tactical judgement (picking the winning/favored player per image). An example caption can be seen below. ICTAM is able to identify the "winning player color" 80% of the time across multiple test trials with the test dataset (data ICTAM had never seen).
-
-<div align="center">
-  <img src="example_caption.png" width="800" />
-  <p><em>Example caption — not the winner declaration followed by a period and the rest of the caption.</em></p>
-</div>
-
-<div align="center">
-  <img src="TrainingLossCurve.png" width="600" />
-  <p><em>Training and Validation Curves showing convergence (HuggingFace Trainer only starts validating after the first epoch)</em></p>
-</div>
-
-<div align="center">
-  <img src="ictam_eval.png" width="300" />
-  <p><em>ICTAM's tactical judgement testset evaluation results (for how many images does it correctly identify the winner?)</em></p>
-</div>
-
-<div style="text-align:center">
-  <img src="blip-image-captioning-base_image_caption.png" width="400" style="vertical-align: top; margin-right:20px;" />
-  <img src="blip-finetuned-model_image_caption.png" width="400" style="vertical-align: top; margin-right:20px;" />
-  <p><em>Left/Before BLIP-base model's caption and Right/After my trained model's caption.</em></p>
-</div> -->

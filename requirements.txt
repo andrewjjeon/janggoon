@@ -7,5 +7,6 @@ Pillow
 numpy
 evaluate
 jiwer
-opencv
+opencv-contrib-python
 scikit-learn
+accelerate>=1.1.0
