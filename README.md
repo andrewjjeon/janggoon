@@ -62,5 +62,6 @@ I evaluated the % of correct tactical judgement from BLIP by parsing the caption
 </div>
 
 ## 5. Future Work
-- Automatic web scraping of data and captioning with LLMs
+- Chrome extension deployment, so users can get real-time text overlay inference on a youtube video
+- Automatic web scraping of data and captioning with LLMs to train a much larger, stronger model
 - Support different deployment and environments with Docker Containers
